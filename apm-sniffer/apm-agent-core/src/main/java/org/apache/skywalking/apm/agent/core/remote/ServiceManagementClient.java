@@ -46,7 +46,7 @@ import static org.apache.skywalking.apm.agent.core.conf.Config.Collector.GRPC_UP
 
 @DefaultImplementor
 public class ServiceManagementClient implements BootService, Runnable, GRPCChannelListener {
-    private static final ILog logger = LogManager.getLogger(ServiceManagementClient.class);
+    private static final ILog LOGGER = LogManager.getLogger(ServiceManagementClient.class);
     private static List<KeyStringValuePair> SERVICE_INSTANCE_PROPERTIES;
 
     private volatile GRPCChannelStatus status = GRPCChannelStatus.DISCONNECT;
@@ -90,7 +90,7 @@ public class ServiceManagementClient implements BootService, Runnable, GRPCChann
         ).scheduleAtFixedRate(
             new RunnableWithExceptionProtection(
                 this,
-                t -> logger.error("unexpected exception.", t)
+                t -> LOGGER.error("unexpected exception.", t)
             ), 0, Config.Collector.HEARTBEAT_PERIOD,
             TimeUnit.SECONDS
         );
@@ -107,7 +107,7 @@ public class ServiceManagementClient implements BootService, Runnable, GRPCChann
 
     @Override
     public void run() {
-        logger.debug("ServiceManagementClient running, status:{}.", status);
+        LOGGER.debug("ServiceManagementClient running, status:{}.", status);
 
         if (GRPCChannelStatus.CONNECTED.equals(status)) {
             try {
@@ -119,7 +119,8 @@ public class ServiceManagementClient implements BootService, Runnable, GRPCChann
                             .reportInstanceProperties(InstanceProperties.newBuilder()
                                                                         .setService(Config.Agent.SERVICE_NAME)
                                                                         .setServiceInstance(Config.Agent.INSTANCE_NAME)
-                                                                        .addAllProperties(OSUtil.buildOSInfo())
+                                                                        .addAllProperties(OSUtil.buildOSInfo(
+                                                                            Config.OsInfo.IPV4_LIST_SIZE))
                                                                         .addAllProperties(SERVICE_INSTANCE_PROPERTIES)
                                                                         .build());
                         instancePropertiesSubmitted = true;
@@ -135,7 +136,7 @@ public class ServiceManagementClient implements BootService, Runnable, GRPCChann
                     }
                 }
             } catch (Throwable t) {
-                logger.error(t, "ServiceManagementClient execute fail.");
+                LOGGER.error(t, "ServiceManagementClient execute fail.");
                 ServiceManager.INSTANCE.findService(GRPCChannelManager.class).reportError(t);
             }
         }

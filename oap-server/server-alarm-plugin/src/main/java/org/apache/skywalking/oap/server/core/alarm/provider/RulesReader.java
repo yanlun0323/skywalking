@@ -25,6 +25,8 @@ import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import org.apache.skywalking.oap.server.core.alarm.provider.grpc.GRPCAlarmSetting;
+import org.apache.skywalking.oap.server.core.alarm.provider.slack.SlackSettings;
+import org.apache.skywalking.oap.server.core.alarm.provider.wechat.WechatSettings;
 import org.yaml.snakeyaml.Yaml;
 
 /**
@@ -65,13 +67,21 @@ public class RulesReader {
                         alarmRule.setExcludeNames((ArrayList) settings.getOrDefault("exclude-names", new ArrayList(0)));
                         alarmRule.setIncludeNamesRegex((String) settings.getOrDefault("include-names-regex", ""));
                         alarmRule.setExcludeNamesRegex((String) settings.getOrDefault("exclude-names-regex", ""));
+                        alarmRule.setIncludeLabels(
+                            (ArrayList) settings.getOrDefault("include-labels", new ArrayList(0)));
+                        alarmRule.setExcludeLabels(
+                            (ArrayList) settings.getOrDefault("exclude-labels", new ArrayList(0)));
+                        alarmRule.setIncludeLabelsRegex((String) settings.getOrDefault("include-labels-regex", ""));
+                        alarmRule.setExcludeLabelsRegex((String) settings.getOrDefault("exclude-labels-regex", ""));
                         alarmRule.setThreshold(settings.get("threshold").toString());
                         alarmRule.setOp((String) settings.get("op"));
                         alarmRule.setPeriod((Integer) settings.getOrDefault("period", 1));
                         alarmRule.setCount((Integer) settings.getOrDefault("count", 1));
-                        alarmRule.setSilencePeriod((Integer) settings.getOrDefault("silence-period", -1));
-                        alarmRule.setMessage((String) settings.getOrDefault("message", "Alarm caused by Rule " + alarmRule
-                            .getAlarmRuleName()));
+                        // How many times of checks, the alarm keeps silence after alarm triggered, default as same as period.
+                        alarmRule.setSilencePeriod((Integer) settings.getOrDefault("silence-period", alarmRule.getPeriod()));
+                        alarmRule.setMessage(
+                            (String) settings.getOrDefault("message", "Alarm caused by Rule " + alarmRule
+                                .getAlarmRuleName()));
 
                         rules.getRules().add(alarmRule);
                     }
@@ -100,8 +110,32 @@ public class RulesReader {
 
                 rules.setGrpchookSetting(grpcAlarmSetting);
             }
-        }
 
+            Map slacks = (Map) yamlData.get("slackHooks");
+            if (slacks != null) {
+                SlackSettings slackSettings = new SlackSettings();
+                Object textTemplate = slacks.getOrDefault("textTemplate", "");
+                slackSettings.setTextTemplate((String) textTemplate);
+
+                List<String> slackWebhooks = (List<String>) slacks.get("webhooks");
+                if (slackWebhooks != null) {
+                    slackSettings.getWebhooks().addAll(slackWebhooks);
+                }
+                rules.setSlacks(slackSettings);
+            }
+
+            Map wechatConfig = (Map) yamlData.get("wechatHooks");
+            if (wechatConfig != null) {
+                WechatSettings wechatSettings = new WechatSettings();
+                Object textTemplate = wechatConfig.getOrDefault("textTemplate", "");
+                wechatSettings.setTextTemplate((String) textTemplate);
+                List<String> wechatWebhooks = (List<String>) wechatConfig.get("webhooks");
+                if (wechatWebhooks != null) {
+                    wechatSettings.getWebhooks().addAll(wechatWebhooks);
+                }
+                rules.setWecchats(wechatSettings);
+            }
+        }
         return rules;
     }
 }

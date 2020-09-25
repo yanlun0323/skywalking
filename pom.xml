@@ -22,7 +22,7 @@
 
     <groupId>org.apache.skywalking</groupId>
     <artifactId>apm</artifactId>
-    <version>8.0.0-SNAPSHOT</version>
+    <version>8.2.0-SNAPSHOT</version>
 
     <parent>
         <groupId>org.apache</groupId>
@@ -250,6 +250,7 @@
             <version>${jmh.version}</version>
             <scope>test</scope>
         </dependency>
+
         <dependency>
             <groupId>org.projectlombok</groupId>
             <artifactId>lombok</artifactId>
@@ -288,6 +289,12 @@
                 <groupId>org.powermock</groupId>
                 <artifactId>powermock-api-mockito</artifactId>
                 <version>${powermock.version}</version>
+                <scope>test</scope>
+            </dependency>
+            <dependency>
+                <groupId>org.openjdk.jmh</groupId>
+                <artifactId>jmh-generator-annprocess</artifactId>
+                <version>${jmh.version}</version>
                 <scope>test</scope>
             </dependency>
         </dependencies>
@@ -376,12 +383,16 @@
                         <goals>
                             <goal>enforce</goal>
                         </goals>
+                        <phase>validate</phase>
                         <configuration>
                             <rules>
                                 <requireJavaVersion>
                                     <!-- Build has not yet been updated for Java 9+ -->
                                     <version>1.8</version>
                                 </requireJavaVersion>
+                                <requireMavenVersion>
+                                    <version>3.6</version>
+                                </requireMavenVersion>
                             </rules>
                         </configuration>
                     </execution>
@@ -474,6 +485,7 @@
                         <exclude>**/src/main/proto/prometheus/client_model/metrics.proto</exclude>
                         <exclude>**/src/main/proto/protoc-gen-swagger/**</exclude>
                         <exclude>**/src/main/proto/validate/validate.proto</exclude>
+                        <exclude>**/src/main/proto/opencensus/**</exclude>
 
                         <!-- generated file from oal grammar and rt template -->
                         <exclude>**/src/main/antlr4/org/apache/skywalking/oal/rt/grammar/OALLexer.tokens</exclude>
@@ -486,6 +498,7 @@
 
                         <!-- generated file from test agent plugin scenarios -->
                         <exclude>**/test/plugin/workspace/**</exclude>
+                        <exclude>**/test/jacoco/**</exclude>
 
                         <!-- TSL relevant files for e2e test -->
                         <exclude>**/*.crt</exclude>
@@ -555,8 +568,8 @@
                 <artifactId>maven-checkstyle-plugin</artifactId>
                 <version>${maven-checkstyle-plugin.version}</version>
                 <configuration>
-                    <configLocation>apm-checkstyle/checkStyle.xml</configLocation>
-                    <headerLocation>apm-checkstyle/CHECKSTYLE_HEAD</headerLocation>
+                    <configLocation>${maven.multiModuleProjectDirectory}/apm-checkstyle/checkStyle.xml</configLocation>
+                    <headerLocation>${maven.multiModuleProjectDirectory}/apm-checkstyle/CHECKSTYLE_HEAD</headerLocation>
                     <encoding>UTF-8</encoding>
                     <consoleOutput>true</consoleOutput>
                     <includeTestSourceDirectory>true</includeTestSourceDirectory>
@@ -573,6 +586,10 @@
                         **/*.yaml,
                         **/*.xml
                     </resourceIncludes>
+                    <resourceExcludes>
+                        **/.asf.yaml,
+                        **/.github/**
+                    </resourceExcludes>
                     <excludes>
                         **/target/generated-test-sources/**,
                         org/apache/skywalking/apm/network/register/v2/**/*.java,
@@ -582,10 +599,12 @@
                         org/apache/skywalking/oap/server/core/remote/grpc/proto/*.java,
                         org/apache/skywalking/oal/rt/grammar/*.java,
                         org/apache/skywalking/oap/server/exporter/grpc/*.java,
-                        org/apache/skywalking/oap/server/configuration/service/*.java
+                        org/apache/skywalking/oap/server/configuration/service/*.java,
+                        **/generated/*_jmhType*.java,
+                        **/generated/*_jmhTest.java
                     </excludes>
                     <propertyExpansion>
-                        import.control=apm-checkstyle/importControl.xml
+                        import.control=${maven.multiModuleProjectDirectory}/apm-checkstyle/importControl.xml
                     </propertyExpansion>
                 </configuration>
                 <executions>

@@ -61,7 +61,7 @@ public enum NodeType {
      */
     User(10),
     /**
-     * <code>User = 11</code>
+     * <code>Unrecognized = 11</code>
      */
     Unrecognized(11);
 
@@ -89,6 +89,8 @@ public enum NodeType {
                 return MQ;
             case 5:
                 return Cache;
+            case 6:
+                return Browser;
             case 10:
                 return User;
             case 11:
